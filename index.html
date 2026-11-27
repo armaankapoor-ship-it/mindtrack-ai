@@ -1,6 +1,74 @@
 <!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>MindTrack AI</title><style>
 *{box-sizing:border-box}body{margin:0;background:#eef3f8;color:#183047;font:16px system-ui}header{background:#142d46;color:white;padding:28px 6%}header h1{margin:0;font-size:36px}main{max-width:1080px;margin:auto;padding:24px;display:grid;grid-template-columns:1fr 1fr;gap:18px}section{background:white;border-radius:18px;padding:24px;box-shadow:0 4px 20px #18304710}h2{margin-top:0}label{display:block;margin:12px 0 5px}textarea,select,input{width:100%;padding:12px;border:1px solid #b9c8d8;border-radius:8px;font:inherit}button{padding:12px 16px;border:0;border-radius:9px;background:#176d75;color:white;font:inherit;cursor:pointer;margin:8px 4px 0 0}button.secondary{background:#e6edf4;color:#183047}button:focus-visible{outline:3px solid orange}small{color:#52677d}.bar{height:13px;background:#e8eef5;border-radius:10px;overflow:hidden}.fill{height:100%;background:#239b98}#prediction{white-space:pre-line;line-height:1.55}#history{max-height:280px;overflow:auto}.entry{border-bottom:1px solid #e0e8f0;padding:10px 0}.wide{grid-column:1/-1}footer{text-align:center;padding:20px;color:#52677d}@media(max-width:650px){main{grid-template-columns:1fr}.wide{grid-column:auto}}
-</style><header><small style="color:#b3d9dc">CBSE AI 843 / CLASS XII</small><h1>MindTrack AI</h1><p>Understand your day, one check-in at a time.</p></header><main><section><h2>Daily check-in</h2><label for="date">Date</label><input type="date" id="date"><label for="journal">Optional journal (English)</label><textarea id="journal" rows="4" placeholder="How was your day?"></textarea><button id="analyze">Analyse with AI</button><p id="prediction" aria-live="polite">AI suggestion will appear here.</p><label for="mood">Choose your actual mood</label><select id="mood"><option>Happy</option><option>Sad</option><option>Angry</option><option>Stressed</option><option>Neutral</option><option>Motivated</option><option>Disappointed</option><option>Frustrated</option><option>Anxious</option><option>Exhausted</option><option>Lonely</option><option>Confused</option><option>Relieved</option><option>Confident</option><option>Grateful</option><option>Calm</option><option>Embarrassed</option><option>Hurt</option><option>Overwhelmed</option><option>Hopeful</option><option>Envious</option><option>Guilty</option><option>Grieving</option><option>Bittersweet</option><option>Proud</option><option>Longing</option></select><button id="save">Save check-in</button><p id="status" aria-live="polite"></p><small>Only your selected mood and date are saved. Journal text is not stored.</small></section><section><h2>Mood overview</h2><label for="period">Tracking period</label><select id="period"><option value="7">Last 7 days</option><option value="30">Last 30 days</option></select><p id="summary"></p><div id="bars"></div><h3>Reflection suggestion</h3><p id="tip">Record a mood to get a suggestion.</p></section><section class="wide"><h2>Check-in history</h2><div id="history"></div><button class="secondary" id="export">Export CSV</button><button class="secondary" id="clear">Delete all data</button></section><section class="wide"><h2>About this project</h2><p>MindTrack analyses sentences and emotional shifts across your journal using a word-frequency model, an expanded vocabulary, contextual phrases, slang and emoji recognition. It recognises 26 moods and examines narrative context, performance comparisons, future intentions, and mixed feelings. Predictions may misunderstand sarcasm or complex context. Your self-selected mood always takes priority.</p><p>Educational tool only, not a diagnosis. If you are struggling, consider talking to a trusted adult, school counsellor or qualified professional.</p><p>Armaann Kapoor · Nabhya Kumar Mishra</p></section></main><footer>MindTrack AI | SDG 3 &amp; SDG 4 | No account or paid API required</footer><script>const training={Happy:['i feel happy today','i am excited about school','great day with friends','i enjoyed my classes','feeling cheerful and grateful','i am proud of my progress','everything feels wonderful','i feel joyful and hopeful'],Sad:['i feel sad today','i miss my friends','i feel lonely and upset','i am disappointed with my marks','i feel down and unhappy','i cried after school','i feel gloomy and low','nothing seems enjoyable'],Angry:['i feel angry today','i am furious about the argument','i feel annoyed and irritated','i am frustrated with the noise','i feel mad at the situation','the unfair decision upset me','i am angry about the delay','i feel irritated by interruptions'],Stressed:['i feel stressed about exams','i am worried about deadlines','too much homework overwhelms me','i feel anxious about tests','i am nervous about results','i feel pressure to perform','i cannot relax before exams','i worry about my workload'],Neutral:['i feel okay today','today was ordinary','nothing special happened','i attended regular classes','i feel calm and steady','it was a normal day','i feel fine as usual','i have no strong feelings']};
+:root{--ink:#183047;--teal:#176d75;--muted:#52677d;--line:#dce7ef}
+nav.tracker-nav{max-width:1080px;margin:0 auto;padding:14px 24px 0;display:flex;gap:8px;flex-wrap:wrap}
+.tracker-nav button[aria-selected=true],.analytics-tabs button[aria-selected=true]{background:#176d75;color:white}
+.analytics-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+#analytics[hidden],#checkin-view[hidden],.analytics-page[hidden]{display:none!important}
+#analytics{display:block;max-width:1080px;margin:auto;padding:24px}
+.analytics-page{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+.analytics-header{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.analytics-header h2{margin:0}
+.analytics-page h3{margin:0 0 10px}
+.analytics-page .wide{grid-column:1/-1}
+.graph{min-height:200px;width:100%;overflow:auto}
+.graph svg{display:block;width:100%;height:auto;min-width:420px}
+.graph-empty{padding:44px 16px;text-align:center;color:#52677d;background:#f4f8fb;border-radius:12px}
+.dimension-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.dimension-card{background:#f2f7fa;padding:12px;border:1px solid #dae5ed;border-radius:10px}
+.dimension-card label{margin:0;font-weight:600}
+.dimension-card output{font-size:1.2rem;font-weight:700;float:right;color:#176d75}
+input[type=range]{padding:0;accent-color:#176d75;cursor:pointer}
+.score-rows{display:grid;gap:10px;margin:14px 0}
+.score-row{display:grid;grid-template-columns:minmax(110px,1fr) minmax(100px,2fr) 40px;gap:10px;align-items:center}
+.score-row label{margin:0;font-weight:500}
+.score-row output{text-align:right;font-weight:600}
+.analytics-select{display:flex;gap:12px;align-items:end;flex-wrap:wrap}
+.analytics-select>*{flex:1;min-width:145px}
+.analytics-select label{font-size:14px}
+.metric-strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(126px,1fr));gap:10px;margin:16px 0}
+.metric{background:#f2f7fa;border-radius:12px;padding:14px}
+.metric strong{display:block;color:#176d75;font-size:24px;margin-top:5px}
+.metric small{font-size:14px}
+.heatmap{border-collapse:separate;border-spacing:4px;width:100%;text-align:center;font-size:13px}
+.heatmap th{padding:6px 3px;color:#52677d;font-weight:600}
+.heatmap td{padding:7px 5px;border-radius:5px;min-width:30px}
+.heatmap td:first-child{text-align:left;font-weight:600;white-space:nowrap}
+.legend{display:flex;gap:12px;flex-wrap:wrap;margin:12px 0;font-size:13px;color:#52677d}
+.legend i{width:11px;height:11px;display:inline-block;border-radius:50%;margin-right:5px}
+#detail-list article{padding:12px 0;border-bottom:1px solid #dce7ef}
+#detail-list article p{margin:6px 0;white-space:pre-wrap;overflow-wrap:anywhere}
+#detail-list article button{font-size:13px}
+.checkline{display:flex;gap:8px;align-items:center}
+.checkline input{width:auto}
+.chart-note{font-size:13px;color:#52677d;margin-top:8px;line-height:1.45}
+#score-editor{border-top:1px solid #dce7ef;margin-top:20px;padding-top:16px}
+#score-editor h3{margin:0 0 4px}
+#score-editor small{line-height:1.5}
+@media(max-width:650px){.analytics-page{grid-template-columns:1fr}#analytics{padding:15px}.tracker-nav{padding:12px 15px 0}.dimension-grid{grid-template-columns:1fr 1fr}.graph svg{min-width:360px}.analytics-page section{padding:16px}.score-row{grid-template-columns:110px 1fr 32px}.heatmap{font-size:12px}}
+</style><header><small style="color:#b3d9dc">CBSE AI 843 / CLASS XII</small><h1>MindTrack AI</h1><p>Understand your day, one check-in at a time.</p></header><nav class="tracker-nav" aria-label="Main navigation"><button id="nav-checkin" class="secondary" aria-selected="true">Daily check-in</button><button id="nav-analytics" class="secondary" aria-selected="false">Emotional analytics</button></nav>
+<main id="checkin-view"><section><h2>Daily check-in</h2><label for="date">Date</label><input type="date" id="date"><label for="journal">Optional journal (English)</label><textarea id="journal" rows="4" placeholder="How was your day?"></textarea><button id="analyze">Analyse with AI</button><p id="prediction" aria-live="polite">AI suggestion will appear here.</p><label for="mood">Choose your actual mood</label><select id="mood"><option>Happy</option><option>Sad</option><option>Angry</option><option>Stressed</option><option>Neutral</option><option>Motivated</option><option>Disappointed</option><option>Frustrated</option><option>Anxious</option><option>Exhausted</option><option>Lonely</option><option>Confused</option><option>Relieved</option><option>Confident</option><option>Grateful</option><option>Calm</option><option>Embarrassed</option><option>Hurt</option><option>Overwhelmed</option><option>Hopeful</option><option>Envious</option><option>Guilty</option><option>Grieving</option><option>Bittersweet</option><option>Proud</option><option>Longing</option></select><div id="score-editor"><h3>Emotional Index Scores</h3><small>AI estimates are editable. Select a mood or analyse your journal to start. Scores describe your experience, not the AI's certainty.</small><div id="dimension-inputs" class="dimension-grid" style="margin-top:12px"></div><p id="confidence-note" class="chart-note"></p><h4>Emotion intensity ratings (0–10)</h4><div id="score-rows" class="score-rows"></div><div class="analytics-select"><div><label for="extra-emotion">Add another emotion</label><select id="extra-emotion"></select></div><button id="add-emotion" class="secondary">Add emotion</button></div><small>Set an emotion to 0 if you did not experience it.</small><label for="checkin-time">Time of check-in</label><input type="time" id="checkin-time"><label class="checkline"><input type="checkbox" id="save-journal"> Save journal text on this device (optional)</label><small>With this unchecked, only your mood, ratings, date and time are stored.</small></div>
+<button id="save">Save check-in</button><p id="status" aria-live="polite"></p><small>Your check-ins and scores stay on this device. Saving journal text is optional.</small></section><section><h2>Mood overview</h2><label for="period">Tracking period</label><select id="period"><option value="7">Last 7 days</option><option value="30">Last 30 days</option></select><p id="summary"></p><div id="bars"></div><h3>Reflection suggestion</h3><p id="tip">Record a mood to get a suggestion.</p></section><section class="wide"><h2>Check-in history</h2><div id="history"></div><button class="secondary" id="export">Export CSV</button><button class="secondary" id="clear">Delete all data</button></section><section class="wide"><h2>About this project</h2><p>MindTrack analyses sentences and emotional shifts across your journal using a word-frequency model, an expanded vocabulary, contextual phrases, slang and emoji recognition. It recognises 26 primary moods and supports 31 separate intensity ratings. The emotional analytics view maps narrative context, performance comparisons, future intentions, and mixed feelings to editable dimension scores. Predictions may misunderstand sarcasm or complex context. Your self-selected mood always takes priority.</p><p>Educational tool only, not a diagnosis. If you are struggling, consider talking to a trusted adult, school counsellor or qualified professional.</p><p>Armaann Kapoor · Nabhya Kumar Mishra</p></section></main><main id="analytics" hidden>
+<section class="analytics-header"><div><h2>Emotional analytics</h2><p style="margin:8px 0 0;color:#52677d">Explore the emotional patterns in your recorded check-ins.</p></div><button id="return-checkin" class="secondary">New check-in</button></section>
+<div class="analytics-tabs" role="tablist" aria-label="Analysis period">
+<button class="secondary" id="tab-daily" aria-selected="true">Daily</button><button class="secondary" id="tab-weekly" aria-selected="false">Weekly</button><button class="secondary" id="tab-monthly" aria-selected="false">30 days</button><button class="secondary" id="tab-profile" aria-selected="false">Emotional profile</button></div>
+<div class="analytics-page" id="page-daily">
+<section class="wide"><div class="analytics-select"><div><label for="daily-date">Choose date</label><input id="daily-date" type="date"></div><div><label for="daily-series">Emotions to display (select up to 4)</label><select id="daily-series" multiple size="4"></select></div></div><div id="daily-metrics" class="metric-strip"></div><h3>Daily emotion intensity</h3><div id="daily-graph" class="graph"></div><p class="chart-note">Time of each recorded check-in is shown along the horizontal axis. Missing times are not estimated.</p></section>
+<section><h3>Individual emotional breakdown</h3><label for="entry-picker">Check-in</label><select id="entry-picker"></select><div id="entry-bars" class="graph"></div><p id="entry-summary" class="chart-note"></p></section>
+<section><h3>Valence–arousal map</h3><div id="state-map" class="graph"></div><p class="chart-note">Horizontal = pleasantness (−5 to +5). Vertical = mental activation (0 to 10).</p></section>
+<section class="wide"><h3>Check-ins for this day</h3><div id="detail-list"></div></section>
+</div>
+<div class="analytics-page" id="page-weekly" hidden>
+<section class="wide"><h3>Weekly emotional heatmap</h3><p class="chart-note">Average rated intensity by emotion across the last seven calendar days. A dash means no scored check-in or no rating for that emotion. Select a date to explore its entries.</p><div id="weekly-metrics" class="metric-strip"></div><div id="weekly-heatmap" style="overflow:auto"></div><div class="legend"><span><i style="background:#edf5f5"></i>Low</span><span><i style="background:#176d75"></i>High</span><span>— Missing data</span></div><p id="weekly-insight" class="chart-note"></p></section>
+</div>
+<div class="analytics-page" id="page-monthly" hidden>
+<section class="wide"><h3>30-day valence trend</h3><div id="monthly-metrics" class="metric-strip"></div><label class="checkline"><input type="checkbox" id="moving-average" checked> Show 7-day moving average</label><div id="valence-graph" class="graph"></div><p class="chart-note">Daily mean valence from recorded check-ins. Click a recorded day to open its detail.</p></section>
+<section class="wide"><h3>30-day arousal trend</h3><div id="arousal-graph" class="graph"></div><p class="chart-note">Arousal measures activation, which can accompany pleasant or unpleasant experiences.</p></section>
+</div>
+<div class="analytics-page" id="page-profile" hidden><section class="wide"><div class="analytics-select"><div><label for="profile-period">Profile period</label><select id="profile-period"><option value="7">Last 7 days</option><option value="30" selected>Last 30 days</option><option value="1">Today</option></select></div></div><h3>Emotional fingerprint</h3><div id="radar-graph" class="graph"></div><p class="chart-note">Mean of recorded daily ratings for up to eight most prominent emotions. Blank ratings are omitted. The chart describes this period and may change as you record new experiences.</p></section></div>
+<section style="margin-top:18px"><h3>How these scores work</h3><p>MindTrack estimates pleasantness (−5 to +5), activation, motivation, perceived control, and the intensity of each emotion (0 to 10). These are dimensionless project scores, inspired by Russell’s circumplex model and the pleasure, arousal, and dominance dimensions of the Self-Assessment Manikin.</p><p>The AI uses context and emotional evidence to suggest ratings. Review and adjust them before saving. Intensity is a suggested strength, while AI confidence indicates how clear the textual evidence is. Neither is a clinical measurement.</p><small><a href="https://pubmed.ncbi.nlm.nih.gov/16262989/" target="_blank" rel="noopener">Circumplex model</a> · <a href="https://pubmed.ncbi.nlm.nih.gov/7962581/" target="_blank" rel="noopener">Self-Assessment Manikin</a></small></section>
+</main>
+<footer>MindTrack AI | SDG 3 &amp; SDG 4 | No account or paid API required</footer><script>const training={Happy:['i feel happy today','i am excited about school','great day with friends','i enjoyed my classes','feeling cheerful and grateful','i am proud of my progress','everything feels wonderful','i feel joyful and hopeful'],Sad:['i feel sad today','i miss my friends','i feel lonely and upset','i am disappointed with my marks','i feel down and unhappy','i cried after school','i feel gloomy and low','nothing seems enjoyable'],Angry:['i feel angry today','i am furious about the argument','i feel annoyed and irritated','i am frustrated with the noise','i feel mad at the situation','the unfair decision upset me','i am angry about the delay','i feel irritated by interruptions'],Stressed:['i feel stressed about exams','i am worried about deadlines','too much homework overwhelms me','i feel anxious about tests','i am nervous about results','i feel pressure to perform','i cannot relax before exams','i worry about my workload'],Neutral:['i feel okay today','today was ordinary','nothing special happened','i attended regular classes','i feel calm and steady','it was a normal day','i feel fine as usual','i have no strong feelings']};
 const additionalTraining={"Happy":["my day was amazing and fun","i had a good day","i am feeling great","i won a competition","i passed my exam and celebrated","i laughed and smiled with friends","it was fantastic","i am delighted with my achievement","i got good news","i loved spending time with family","i am relieved and pleased","i feel positive and content","i enjoyed playing sports","i had a brilliant time","i am satisfied with my success","i feel blessed","today went really well","i am in a good mood","i had an awesome day","i am thrilled"],"Sad":["my day was terrible","i feel miserable and heartbroken","i lost someone close","i had a bad day","i feel depressed and hopeless","i am feeling blue","i miss someone","i failed my exam and feel disappointed","i want to cry","i felt ignored and rejected","i feel empty and lonely","i am unhappy with everything","nothing went right","i feel hurt","i had a rough day","i feel exhausted emotionally","i am grieving","i feel like crying","i feel worthless","i had an awful day"],"Angry":["i am so mad","i had a fight with someone","i hate the way i was treated","i am really annoyed","i lost my temper","someone insulted me","i am furious and outraged","i feel irritated","i shouted at someone","i cannot stand this","i feel resentful","i was treated unfairly","i am fed up","i feel offended","i argued with my friend","i am frustrated","i am raging","i feel bitter","i am disgusted","i got angry"],"Stressed":["i have too much work","i am overwhelmed by homework","i have a lot of pressure","i am scared about tomorrow","i cannot stop worrying","i feel nervous and anxious","i have exams coming up","i feel burnt out and tired","i have so many deadlines","i do not have enough time","i am panicking about school","i am afraid of failing","i had a hectic day","i am stressed out","i cannot focus","i feel tense and restless","i have lots of assignments","i feel mentally exhausted","i cannot sleep due to worry","i am under pressure"],"Neutral":["my day was normal","it was fine","nothing much happened","just another day","i have no strong preference","i felt relaxed","it was an average day","same as usual","i am doing alright","i feel peaceful","my day was uneventful","i went to school and came home","i have no particular feelings","today was okay","i am feeling balanced","it was so so","nothing unusual happened","i feel indifferent","i am doing alright today","it was quiet and routine"]};
 const moreTraining={"Happy":["i am delighted today","i feel joyful and loved","i had a productive day","i was smiling all day","i feel relaxed and happy"],"Sad":["i feel upset today","i am disappointed and discouraged","i feel alone and abandoned","i feel low and unmotivated","i had an unpleasant day"],"Angry":["i am irritated by everyone","i am frustrated and impatient","i feel furious after an argument","i am angry about being blamed","i feel agitated and annoyed"],"Stressed":["i had a tiring and exhausting day","i am overwhelmed by my schedule","i feel tired from studying","i am nervous about an upcoming exam","i had a busy and stressful day"],"Neutral":["i feel bored and nothing happened","it was a regular day","i am just fine","nothing exciting happened","i feel fairly calm"]};
 for(const label of Object.keys(training))training[label].push(...additionalTraining[label],...moreTraining[label]);
@@ -176,4 +244,367 @@ $('analyze').onclick=()=>{
  else lines.push('Reflection: '+tips[p.label]);
  $('prediction').textContent=lines.join('\n\n');
 };$('save').onclick=()=>{const date=$('date').value;if(!date||date>localDate(new Date())){$('status').textContent='Choose a valid date, not in the future.';return}records=records.filter(r=>r.date!==date);records.push({date,mood:$('mood').value,demo:false});if(persist())$('status').textContent='Check-in saved.';$('journal').value='';$('prediction').textContent='AI suggestion will appear here.';render()};$('period').onchange=render;$('clear').onclick=()=>{if(confirm('Delete all check-ins?')){records=[];persist();render()}};$('export').onclick=()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['date,mood,demo\n'+records.map(r=>[r.date,r.mood,r.demo].join(',')).join('\n')],{type:'text/csv'}));a.download='mindtrack.csv';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)};render();
+</script><script>(function(){
+"use strict";
+const affect={
+ Happy:[4,6],Sad:[-4,3],Angry:[-4,9],Stressed:[-3,8],Neutral:[0,4],
+ Motivated:[3,8],Disappointed:[-3,4],Frustrated:[-3,7],Anxious:[-3,8],
+ Exhausted:[-2,1],Lonely:[-4,2],Confused:[-1,5],Relieved:[3,3],
+ Confident:[3,6],Grateful:[4,4],Calm:[4,1],Embarrassed:[-3,6],Hurt:[-4,5],
+ Overwhelmed:[-4,9],Hopeful:[3,5],Envious:[-2,6],Guilty:[-3,5],
+ Grieving:[-5,3],Bittersweet:[0,5],Proud:[4,6],Longing:[-1,4],
+ Joyful:[5,8],Excited:[4,10],Determined:[2,8],Ambitious:[3,8],"Competitive drive":[1,8]
+};
+const ratingLabels=Object.keys(affect);
+const axisSpecs=[["valence","Valence",-5,5],["arousal","Arousal",0,10],["motivation","Motivation",0,10],["control","Perceived control",0,10]];
+const colors=["#176d75","#d97706","#7c3aed","#d65b77","#2868ad","#178a5b","#91462c","#65748b"];
+const round=v=>Math.round(v*10)/10;
+const mean=a=>a.length?round(a.reduce((s,x)=>s+x,0)/a.length):null;
+const clamp=(x,low,high)=>Math.max(low,Math.min(high,x));
+const finite=x=>typeof x==="number"&&Number.isFinite(x);
+const format=x=>finite(x)?x.toFixed(1):"—";
+const localTime=d=>String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0");
+const today=()=>localDate(new Date());
+const normalizeRecord=r=>({...r,intensities:r.intensities&&typeof r.intensities==="object"?r.intensities:null});
+const scored=r=>r.intensities&&finite(r.valence)&&finite(r.arousal);
+const validRecords=()=>records.filter(r=>r&&typeof r.date==="string").map(normalizeRecord);
+function estimate(text,p,chosen){
+ const raw=normalizeText(text), intensity={};
+ const known=p&&p.label!=="Uncertain";
+ const strongest=known?Math.max(...p.moods.map(m=>m.score),1):1;
+ const strong=/\b(?:extremely|completely|unbearably|very|overwhelmingly|deeply|so much|could not stop|all day)\b/.test(raw);
+ const mild=/\b(?:slightly|a little|a bit|somewhat|barely|mildly)\b/.test(raw);
+ const plan=/\b(?:decided|intend|plan|will|goal|aim|target|want)\b/.test(raw)&&/\b(?:train\w*|practi[cs]\w*|improv\w*|learn|study|work harder|get better|do better|qualif\w*)\b/.test(raw)&&!/\b(?:do not want|will not|no intention)\b/.test(raw);
+ const commitment=plan&&/\b(?:hours?|minutes?|every day|each week|weekly|daily|a week|schedule|sessions?|signed up|month)\b/.test(raw);
+ if(known){
+  const relevant=p.moods.filter(m=>m.label===p.label||m.score>=Math.max(2,strongest*.2)).slice(0,7);
+  for(const m of relevant)if(affect[m.label]){
+   const isPrimary=m.label===p.label;
+   let strength=isPrimary?6:4;
+   const direct=m.evidence.some(e=>e.toLowerCase().includes(m.label.toLowerCase()));
+   if(direct)strength+=1;
+   if(strong)strength+=1.5;
+   if(mild)strength-=1.5;
+   if(isPrimary&&m.label==="Motivated"&&commitment)strength+=2;
+   intensity[m.label]=round(clamp(strength,0,10));
+  }
+ }
+ if(!Object.keys(intensity).length)intensity[chosen||"Neutral"]=5;
+ if(plan&&(p?.label==="Motivated"||intensity.Motivated)){
+  intensity.Determined=commitment?9:7;
+  intensity.Ambitious=/\b(?:get better|improve|qualify|reach|beat|best|higher|target|goal)\b/.test(raw)?7:5;
+  if(/\b(?:friends?|opponent|rival|competition|compete|whereas|outscored|ahead of me|better than|score|scored)\b/.test(raw))intensity["Competitive drive"]=7;
+  if(/\b(?:hope|look forward|next|future|month|week|again|better)\b/.test(raw))intensity.Hopeful=Math.max(intensity.Hopeful||0,6);
+ }
+ if(/\b(?:i am|i feel|i felt|i was)\s+(?:very\s+)?(?:joyful|overjoyed|ecstatic)\b/.test(raw))intensity.Joyful=strong?9:7;
+ if(/\b(?:i am|i feel|i felt|i was)\s+(?:very\s+)?(?:excited|thrilled|pumped)\b/.test(raw))intensity.Excited=strong?9:7;
+ const active=Object.entries(intensity).filter(([,v])=>v>0);
+ const total=active.reduce((s,[,v])=>s+v,0)||1;
+ const valence=round(active.reduce((s,[k,v])=>s+affect[k][0]*v,0)/total);
+ const arousal=round(active.reduce((s,[k,v])=>s+affect[k][1]*v,0)/total);
+ const motivation=round(Math.max(intensity.Motivated||0,intensity.Determined||0,intensity.Ambitious||0,plan?7:3));
+ const control=round(clamp(5+(plan?2:0)+(intensity.Confident||0)*.25-(intensity.Overwhelmed||0)*.45-(intensity.Anxious||0)*.2,0,10));
+ const direct=known?p.moods.find(m=>m.label===p.label):null;
+ const confidence=known?(direct&&direct.score>=8?"strong textual evidence":direct&&direct.score>=4?"moderate textual evidence":"limited textual evidence"):"manual rating / no AI estimate";
+ return {intensities:intensity,valence,arousal,motivation,control,confidence};
+}
+let draft=estimate("",null,$("mood").value);
+let draftSource="manual";
+const rows=$("score-rows");
+function updateRangeLabel(input,out){out.textContent=Number(input.value).toFixed(1);}
+function buildSlider(container,name,label,min,max,value,onChange){
+ const id="range-"+name.replace(/\s+/g,"-").toLowerCase();
+ const output=document.createElement("output");
+ const lab=document.createElement("label");lab.htmlFor=id;lab.textContent=label;
+ const input=document.createElement("input");input.id=id;input.type="range";input.min=min;input.max=max;input.step=".1";input.value=value;
+ output.htmlFor=id;updateRangeLabel(input,output);
+ input.oninput=()=>{updateRangeLabel(input,output);onChange(Number(input.value));};
+ container.append(lab,input,output);
+}
+function renderEditor(){
+ $("dimension-inputs").replaceChildren();
+ for(const [name,label,min,max] of axisSpecs){
+  const div=document.createElement("div");div.className="dimension-card";
+  buildSlider(div,name,label,min,max,draft[name],v=>{draft[name]=v;});
+  $("dimension-inputs").append(div);
+ }
+ rows.replaceChildren();
+ for(const [name,value] of Object.entries(draft.intensities)){
+  const div=document.createElement("div");div.className="score-row";
+  buildSlider(div,"emotion-"+name,name,0,10,value,v=>{draft.intensities[name]=v;});
+  rows.append(div);
+ }
+ $("confidence-note").textContent="AI evidence confidence: "+draft.confidence+". Adjust the estimates to match your own experience.";
+ $("extra-emotion").replaceChildren();
+ for(const label of ratingLabels.filter(x=>!Object.hasOwn(draft.intensities,x))){
+  const option=document.createElement("option");option.value=label;option.textContent=label;$("extra-emotion").append(option);
+ }
+ $("add-emotion").disabled=!$("extra-emotion").options.length;
+}
+$("add-emotion").onclick=()=>{const label=$("extra-emotion").value;if(label&&!Object.hasOwn(draft.intensities,label)){draft.intensities[label]=5;renderEditor();}};
+const oldAnalyze=$("analyze").onclick;
+$("analyze").onclick=()=>{
+ oldAnalyze();
+ const text=$("journal").value.trim();
+ if(!text)return;
+ const p=predict(text);
+ draft=estimate(text,p,$("mood").value);draftSource=p.label==="Uncertain"?"manual":"AI suggested";
+ renderEditor();
+ if(p.label!=="Uncertain"){
+  const ratingText=axisSpecs.map(([k,label])=>label+" "+(k==="valence"?(draft[k]>0?"+":"")+format(draft[k]):format(draft[k])+"/10")).join(" · ");
+  $("prediction").textContent+="\n\nSuggested emotional dimensions: "+ratingText+". These are adjustable estimates.";
+  const pleasant=draft.valence>1?"mostly pleasant":draft.valence<-1?"mostly unpleasant":"mixed or close to neutral";
+  const activation=draft.arousal>=7?"high activation":draft.arousal<=3?"low activation":"moderate activation";
+  const drive=draft.motivation>=7?" Your goal-directed drive appears strong.":"";
+  const controlNote=draft.control<=3?" Consider identifying one small action within your control.":"";
+  $("prediction").textContent+="\n\nEmotional interpretation: The entry suggests a "+pleasant+" state with "+activation+"."+drive+controlNote;
+ }
+};
+$("mood").onchange=()=>{
+ const selected=$("mood").value;
+ if(draftSource==="AI suggested"){
+  if(!Object.hasOwn(draft.intensities,selected))draft.intensities[selected]=5;
+ }else{
+  draft=estimate("",null,selected);draftSource="manual";
+ }
+ renderEditor();
+};
+$("checkin-time").value=localTime(new Date());
+$("save").onclick=()=>{
+ const date=$("date").value,time=$("checkin-time").value;
+ if(!date||date>today()||!time){$("status").textContent="Choose a valid date and time.";return;}
+ if(date===today()&&time>localTime(new Date())){$("status").textContent="Choose a time that has already occurred.";return;}
+ const data={id:globalThis.crypto?.randomUUID?.()||Date.now().toString(36)+"-"+Math.random().toString(36).slice(2),date,time,mood:$("mood").value,demo:false,
+  intensities:{...draft.intensities},valence:draft.valence,arousal:draft.arousal,motivation:draft.motivation,control:draft.control,confidence:draft.confidence,source:draftSource};
+ if($("save-journal").checked&&$("journal").value.trim())data.journal=$("journal").value.trim();
+ records.push(data);
+ if(persist())$("status").textContent="Check-in saved. You can record again later today.";
+ $("journal").value="";$("prediction").textContent="AI suggestion will appear here.";
+ $("checkin-time").value=localTime(new Date());$("save-journal").checked=false;
+ draft=estimate("",null,$("mood").value);draftSource="manual";renderEditor();render();
+};
+const originalRender=render;
+render=function(){
+ originalRender();
+ $("history").replaceChildren();
+ const sorted=validRecords().sort((a,b)=>(b.date+" "+(b.time||"")).localeCompare(a.date+" "+(a.time||"")));
+ for(const r of sorted){
+  const div=document.createElement("div");div.className="entry";div.textContent=r.date+(r.time?" "+r.time:"")+" · "+r.mood+(scored(r)?" · Valence "+format(r.valence):" · Historical mood only");
+  $("history").append(div);
+ }
+ if(!sorted.length)$("history").textContent="No entries yet.";
+ if(!$("analytics").hidden)renderAnalytics();
+};
+$("period").onchange=render;
+$("export").onclick=()=>{
+ const cols=["date","time","mood","valence","arousal","motivation","control","confidence","source",...ratingLabels,"journal"];
+ const escape=v=>'"'+String(v??"").replace(/"/g,'""')+'"';
+ const lines=[cols.map(escape).join(",")];
+ for(const r of validRecords()){
+  const values=[r.date,r.time,r.mood,r.valence,r.arousal,r.motivation,r.control,r.confidence,r.source,...ratingLabels.map(k=>r.intensities?.[k]),r.journal];
+  lines.push(values.map(escape).join(","));
+ }
+ const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([lines.join("\n")],{type:"text/csv"}));a.download="mindtrack-emotional-data.csv";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+};
+const NS="http://www.w3.org/2000/svg";
+function svgEl(parent,tag,attrs={},textValue){
+ const element=document.createElementNS(NS,tag);
+ for(const [k,v] of Object.entries(attrs))element.setAttribute(k,String(v));
+ if(textValue!==undefined)element.textContent=textValue;
+ parent.append(element);return element;
+}
+function graphEmpty(target,message){target.replaceChildren();const p=document.createElement("div");p.className="graph-empty";p.textContent=message;target.append(p);}
+function chart(target,title,w=680,h=285){
+ target.replaceChildren();const svg=document.createElementNS(NS,"svg");svg.setAttribute("viewBox","0 0 "+w+" "+h);svg.setAttribute("role","img");svg.setAttribute("aria-label",title);target.append(svg);return svg;
+}
+function text(svg,x,y,t,attrs={}){return svgEl(svg,"text",{x,y,fill:"#52677d","font-size":12,...attrs},t);}
+function line(svg,x1,y1,x2,y2,stroke="#dce7ef",extra={}){return svgEl(svg,"line",{x1,y1,x2,y2,stroke,...extra});}
+function legend(target,series){
+ const div=document.createElement("div");div.className="legend";
+ for(const s of series){const item=document.createElement("span");const dot=document.createElement("i");dot.style.background=s.color;item.append(dot,document.createTextNode(s.label));div.append(item);}
+ target.append(div);
+}
+function lineChart(target,{title,series,min,max,xMax,xLabels,yTicks,clickDay,breakGaps=false}){
+ if(!series.some(s=>s.points.some(p=>finite(p.y)))){graphEmpty(target,"No scored check-ins in this period. Record a check-in to begin.");return;}
+ const svg=chart(target,title),L=49,R=660,T=20,B=234;
+ const projectX=v=>L+(R-L)*v/Math.max(1,xMax),projectY=v=>B-(B-T)*(v-min)/(max-min);
+ for(const y of yTicks){const yy=projectY(y);line(svg,L,yy,R,yy,y===0?"#9badb9":"#dce7ef",{"stroke-dasharray":y===0?"4 3":"none"});text(svg,L-8,yy+4,y,{"text-anchor":"end"});}
+ for(const tick of xLabels){const xx=projectX(tick.x);line(svg,xx,B,xx,B+4);text(svg,xx,B+19,tick.label,{"text-anchor":"middle","font-size":11});}
+ line(svg,L,T,L,B,"#8ba1b0");line(svg,L,B,R,B,"#8ba1b0");
+ for(const s of series){
+  let segment=[];
+  const flush=()=>{if(segment.length>1)svgEl(svg,"polyline",{points:segment.map(p=>projectX(p.x)+","+projectY(p.y)).join(" "),fill:"none",stroke:s.color,"stroke-width":2.4,"stroke-linejoin":"round","stroke-dasharray":s.dashed?"6 4":"none"});segment=[];};
+  for(const p of s.points){
+   if(!finite(p.y)){if(breakGaps)flush();continue;}
+   segment.push(p);
+  }
+  flush();
+  for(const p of s.points.filter(p=>finite(p.y))){
+   const dot=svgEl(svg,"circle",{cx:projectX(p.x),cy:projectY(p.y),r:s.dashed?2:4,fill:s.color,stroke:"white","stroke-width":1});
+   svgEl(dot,"title",{},s.label+": "+format(p.y)+(p.label?" · "+p.label:""));
+   if(clickDay&&p.date&&!s.dashed){dot.setAttribute("tabindex","0");dot.setAttribute("role","button");dot.setAttribute("aria-label",p.date+" "+s.label+" "+format(p.y));dot.style.cursor="pointer";dot.onclick=()=>clickDay(p.date);dot.onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();clickDay(p.date);}};}
+  }
+ }
+ legend(target,series);
+}
+function bars(target,intensities){
+ const entries=Object.entries(intensities||{}).filter(([,v])=>finite(v)).sort((a,b)=>b[1]-a[1]).slice(0,12);
+ if(!entries.length){graphEmpty(target,"No intensity ratings for this entry.");return;}
+ const svg=chart(target,"Individual emotion intensity",680,Math.max(210,entries.length*32+38));
+ const L=155,R=630;
+ for(let i=0;i<entries.length;i++){
+  const [label,value]=entries[i],y=19+i*32;
+  text(svg,L-10,y+14,label,{"text-anchor":"end","font-size":13});
+  svgEl(svg,"rect",{x:L,y,width:R-L,height:19,rx:6,fill:"#e8f0f4"});
+  if(value>0)svgEl(svg,"rect",{x:L,y,width:(R-L)*value/10,height:19,rx:6,fill:colors[i%colors.length]});
+  text(svg,R+8,y+14,format(value),{"font-weight":700});
+ }
+}
+function stateMap(target,r){
+ if(!r||!scored(r)){graphEmpty(target,"Choose a scored check-in to view its position.");return;}
+ const svg=chart(target,"Valence and arousal circumplex",500,300),L=48,R=465,T=28,B=252;
+ const x=v=>L+(v+5)*(R-L)/10,y=v=>B-v*(B-T)/10;
+ svgEl(svg,"rect",{x:L,y:T,width:(R-L)/2,height:(B-T)/2,fill:"#fff0f1"});
+ svgEl(svg,"rect",{x:x(0),y:T,width:(R-L)/2,height:(B-T)/2,fill:"#def5ec"});
+ svgEl(svg,"rect",{x:L,y:y(5),width:(R-L)/2,height:(B-T)/2,fill:"#e9eef8"});
+ svgEl(svg,"rect",{x:x(0),y:y(5),width:(R-L)/2,height:(B-T)/2,fill:"#e6f4f7"});
+ line(svg,L,y(5),R,y(5),"#9badb9");line(svg,x(0),T,x(0),B,"#9badb9");
+ for(const label of [[-2.5,9,"Unpleasant / activated"],[2.5,9,"Pleasant / activated"],[-2.5,1,"Unpleasant / low energy"],[2.5,1,"Pleasant / low energy"]])text(svg,x(label[0]),y(label[1]),label[2],{"text-anchor":"middle","font-size":10});
+ text(svg,L,B+20,"−5");text(svg,x(0),B+20,"0",{"text-anchor":"middle"});text(svg,R,B+20,"+5",{"text-anchor":"end"});text(svg,14,T+4,"10");text(svg,20,B+4,"0");
+ for(const [label,v] of Object.entries(r.intensities).filter(([,v])=>v>0)){
+  const position=affect[label];if(!position)continue;
+  const dot=svgEl(svg,"circle",{cx:x(position[0]),cy:y(position[1]),r:3+v/2,fill:"#6b8da8",opacity:.55});
+  svgEl(dot,"title",{},label+" · "+format(v)+"/10 · illustrative position");
+ }
+ const dot=svgEl(svg,"circle",{cx:x(r.valence),cy:y(r.arousal),r:8,fill:"#176d75",stroke:"white","stroke-width":2});
+ svgEl(dot,"title",{},"Recorded state: "+format(r.valence)+" valence, "+format(r.arousal)+" arousal");
+ text(svg,250,291,"Valence",{"text-anchor":"middle","font-weight":600});
+ legend(target,[{label:"Emotion coordinates (illustrative)",color:"#6b8da8"},{label:"Recorded overall state",color:"#176d75"}]);
+}
+function datesBack(n){
+ const out=[];const d=new Date();d.setHours(12,0,0,0);
+ for(let i=n-1;i>=0;i--){const x=new Date(d);x.setDate(x.getDate()-i);out.push(localDate(x));}return out;
+}
+function dayGroups(days){
+ const all=validRecords();
+ return days.map(date=>({date,all:all.filter(r=>r.date===date),data:all.filter(r=>r.date===date&&scored(r))}));
+}
+function averageField(group,field){return mean(group.data.map(r=>r[field]).filter(finite));}
+function emotionAverage(group,label){return mean(group.data.map(r=>r.intensities[label]).filter(finite));}
+function dailySummary(group){return {valence:averageField(group,"valence"),arousal:averageField(group,"arousal"),motivation:averageField(group,"motivation"),control:averageField(group,"control")};}
+function metrics(target,values){
+ target.replaceChildren();for(const [label,value] of values){const d=document.createElement("div");d.className="metric";const a=document.createElement("small");a.textContent=label;const b=document.createElement("strong");b.textContent=value;d.append(a,b);target.append(d);}
+}
+const dayLabel=d=>d.slice(8)+"/"+d.slice(5,7);
+function timeMinutes(t){if(!/^\d{2}:\d{2}$/.test(t||""))return null;const [h,m]=t.split(":").map(Number);return h*60+m;}
+function refreshEntryDetail(){
+ const day=$("daily-date").value;const items=validRecords().filter(r=>r.date===day).sort((a,b)=>(a.time||"").localeCompare(b.time||""));
+ const index=Number($("entry-picker").value),r=items[index];
+ if(r&&scored(r)){
+  bars($("entry-bars"),r.intensities);stateMap($("state-map"),r);
+  $("entry-summary").textContent="Valence "+format(r.valence)+" · Arousal "+format(r.arousal)+"/10 · Motivation "+format(r.motivation)+"/10 · Control "+format(r.control)+"/10 · Evidence: "+(r.confidence||"not recorded");
+ }else{
+  graphEmpty($("entry-bars"),"No scored entry selected.");stateMap($("state-map"),null);$("entry-summary").textContent="";
+ }
+}
+function renderDaily(){
+ const day=$("daily-date").value||today(),g=dayGroups([day])[0],stats=dailySummary(g);
+ metrics($("daily-metrics"),[["Check-ins",g.all.length],["Average valence",format(stats.valence)],["Arousal /10",format(stats.arousal)],["Motivation /10",format(stats.motivation)],["Control /10",format(stats.control)]]);
+ const items=g.all.sort((a,b)=>(a.time||"").localeCompare(b.time||""));
+ const available=ratingLabels.filter(label=>g.data.some(r=>finite(r.intensities[label])));
+ const selector=$("daily-series");
+ const previous=Array.from(selector.selectedOptions).map(o=>o.value);
+ selector.replaceChildren();
+ const ranked=available.slice().sort((a,b)=>(emotionAverage(g,b)||0)-(emotionAverage(g,a)||0));
+ const selection=previous.filter(x=>available.includes(x));
+ for(const name of available){const o=document.createElement("option");o.value=name;o.textContent=name;o.selected=(selection.length?selection:ranked.slice(0,4)).includes(name);selector.append(o);}
+ const selected=Array.from(selector.selectedOptions).slice(0,4).map(o=>o.value);
+ for(const option of selector.options)option.selected=selected.includes(option.value);
+ const points=g.data.filter(r=>timeMinutes(r.time)!==null).sort((a,b)=>timeMinutes(a.time)-timeMinutes(b.time));
+ lineChart($("daily-graph"),{title:"Daily emotion intensity by time",series:selected.map((label,i)=>({label,color:colors[i],points:points.map(r=>({x:timeMinutes(r.time),y:r.intensities[label],label:r.time}))})),min:0,max:10,xMax:1440,xLabels:[0,360,720,1080,1440].map(x=>({x,label:x===1440?"24:00":String(x/60).padStart(2,"0")+":00"})),yTicks:[0,2,4,6,8,10],breakGaps:true});
+ const picker=$("entry-picker"),old=picker.value;picker.replaceChildren();
+ items.forEach((r,i)=>{const o=document.createElement("option");o.value=i;o.textContent=(r.time||"Time unknown")+" · "+r.mood;picker.append(o);});
+ if(items.length)picker.value=items.some((_,i)=>String(i)===old)?old:String(items.length-1);
+ $("detail-list").replaceChildren();
+ if(!items.length)$("detail-list").textContent="No check-ins for this date.";
+ items.forEach((r,i)=>{
+  const article=document.createElement("article"),title=document.createElement("strong");title.textContent=(r.time||"Time unknown")+" · "+r.mood;article.append(title);
+  const p=document.createElement("p");p.textContent=scored(r)?"Valence "+format(r.valence)+" · Arousal "+format(r.arousal)+" · Motivation "+format(r.motivation)+" · Control "+format(r.control):"Historical entry — scores were not recorded.";article.append(p);
+  if(r.journal){const j=document.createElement("p");j.textContent=r.journal;article.append(j);}else {const note=document.createElement("small");note.textContent="Journal text not saved.";article.append(note);}
+  const b=document.createElement("button");b.className="secondary";b.textContent="View breakdown";b.onclick=()=>{picker.value=String(i);refreshEntryDetail();$("entry-bars").scrollIntoView({behavior:"smooth",block:"nearest"});};article.append(document.createElement("br"),b);$("detail-list").append(article);
+ });
+ refreshEntryDetail();
+}
+function openDay(date){$("daily-date").value=date;showPage("daily");}
+function renderWeekly(){
+ const groups=dayGroups(datesBack(7));
+ const active=ratingLabels.filter(label=>groups.some(g=>emotionAverage(g,label)!==null));
+ const recordsCount=groups.reduce((s,g)=>s+g.all.length,0);
+ metrics($("weekly-metrics"),[["Check-ins",recordsCount],["Scored days",groups.filter(g=>g.data.length).length+"/7"],["Average valence",format(mean(groups.map(g=>averageField(g,"valence")).filter(finite)))],["Average arousal",format(mean(groups.map(g=>averageField(g,"arousal")).filter(finite)))]]);
+ const target=$("weekly-heatmap");target.replaceChildren();
+ if(!active.length){graphEmpty(target,"No recorded emotion ratings in the last 7 days.");$("weekly-insight").textContent="";return;}
+ const table=document.createElement("table");table.className="heatmap";
+ const header=document.createElement("tr"),title=document.createElement("th");title.textContent="Emotion";header.append(title);
+ for(const g of groups){const th=document.createElement("th"),btn=document.createElement("button");btn.className="secondary";btn.style.cssText="padding:5px 6px;font-size:12px;margin:0";btn.textContent=dayLabel(g.date);btn.onclick=()=>openDay(g.date);th.append(btn);header.append(th);}
+ const head=document.createElement("thead");head.append(header);table.append(head);
+ const body=document.createElement("tbody");
+ for(const name of active){
+  const row=document.createElement("tr"),cell=document.createElement("td");cell.textContent=name;row.append(cell);
+  for(const g of groups){
+   const value=emotionAverage(g,name),td=document.createElement("td");td.textContent=finite(value)?format(value):"—";td.title=name+" · "+g.date+": "+(finite(value)?format(value)+"/10":"not rated");
+   td.style.background=finite(value)?"rgba(23,109,117,"+(.08+.092*value)+")":"#f2f5f7";td.style.color=finite(value)&&value>=5.5?"#fff":"#183047";row.append(td);
+  }body.append(row);
+ }table.append(body);target.append(table);
+ const ranked=active.map(label=>[label,mean(groups.map(g=>emotionAverage(g,label)).filter(finite))]).sort((a,b)=>b[1]-a[1]);
+ $("weekly-insight").textContent="Most prominent recorded emotion: "+ranked[0][0]+" ("+format(ranked[0][1])+"/10 mean on days with a rating).";
+ const stressDays=groups.map(g=>({date:g.date,value:emotionAverage(g,"Stressed")})).filter(g=>finite(g.value)).sort((a,b)=>b.value-a.value);
+ if(stressDays.length>1)$("weekly-insight").textContent+=" Highest recorded stress: "+dayLabel(stressDays[0].date)+" ("+format(stressDays[0].value)+"/10).";
+}
+function renderMonthly(){
+ const groups=dayGroups(datesBack(30)),observed=groups.map(g=>({date:g.date,valence:averageField(g,"valence")})).filter(g=>finite(g.valence));
+ const values=observed.map(g=>g.valence),last=observed.at(-1),first=observed[0];
+ const trend=observed.length<2?"Insufficient data":last.valence-first.valence>.3?"Rising":first.valence-last.valence>.3?"Falling":"Steady";
+ metrics($("monthly-metrics"),[["Scored days",observed.length+"/30"],["Mean valence",format(mean(values))],["Highest",values.length?format(Math.max(...values)):"—"],["Lowest",values.length?format(Math.min(...values)):"—"],["Overall direction",trend]]);
+ const ticks=[0,6,12,18,24,29].map(i=>({x:i,label:dayLabel(groups[i].date)}));
+ const points=groups.map((g,i)=>({x:i,y:averageField(g,"valence"),date:g.date,label:g.date}));
+ const series=[{label:"Daily valence",color:colors[0],points}];
+ if($("moving-average").checked)series.push({label:"7-day moving average",color:colors[1],dashed:true,points:groups.map((g,i)=>({x:i,y:points[i].y===null?null:mean(points.slice(Math.max(0,i-6),i+1).map(p=>p.y).filter(finite)),date:g.date}))});
+ lineChart($("valence-graph"),{title:"30-day emotional valence",series,min:-5,max:5,xMax:29,xLabels:ticks,yTicks:[-5,-2.5,0,2.5,5],clickDay:openDay,breakGaps:true});
+ lineChart($("arousal-graph"),{title:"30-day arousal",series:[{label:"Daily arousal",color:colors[2],points:groups.map((g,i)=>({x:i,y:averageField(g,"arousal"),date:g.date,label:g.date}))}],min:0,max:10,xMax:29,xLabels:ticks,yTicks:[0,2,4,6,8,10],clickDay:openDay,breakGaps:true});
+}
+function renderProfile(){
+ const n=Number($("profile-period").value),groups=dayGroups(datesBack(n));
+ const entries=ratingLabels.map(label=>[label,mean(groups.map(g=>emotionAverage(g,label)).filter(finite))]).filter(([,v])=>finite(v)).sort((a,b)=>b[1]-a[1]).slice(0,8);
+ const target=$("radar-graph");
+ if(!entries.length){graphEmpty(target,"No scored check-ins in this period.");return;}
+ if(entries.length<3){bars(target,Object.fromEntries(entries));return;}
+ const svg=chart(target,"Emotional fingerprint",680,410),cx=340,cy=204,r=135;
+ const angle=i=>(-Math.PI/2)+i*2*Math.PI/entries.length;
+ const p=(i,v)=>[cx+Math.cos(angle(i))*r*v/10,cy+Math.sin(angle(i))*r*v/10];
+ const polygon=v=>entries.map((_,i)=>p(i,v).join(",")).join(" ");
+ for(const v of [2,4,6,8,10]){svgEl(svg,"polygon",{points:polygon(v),fill:"none",stroke:"#dce7ef"});text(svg,cx+5,cy-r*v/10+3,v,{"font-size":10});}
+ entries.forEach(([label],i)=>{const pos=p(i,10);line(svg,cx,cy,...pos);const labelPos=p(i,12);text(svg,labelPos[0],labelPos[1],label+" "+format(entries[i][1]),{"text-anchor":"middle","font-size":12,"font-weight":600});});
+ svgEl(svg,"polygon",{points:entries.map((e,i)=>p(i,e[1]).join(",")).join(" "),fill:"#176d7538",stroke:"#176d75","stroke-width":2});
+ entries.forEach((e,i)=>{const q=p(i,e[1]);const dot=svgEl(svg,"circle",{cx:q[0],cy:q[1],r:4,fill:"#176d75"});svgEl(dot,"title",{},e[0]+": "+format(e[1])+"/10");});
+}
+const pages=["daily","weekly","monthly","profile"];
+let activePage="daily";
+function renderAnalytics(){
+ if(activePage==="daily")renderDaily();else if(activePage==="weekly")renderWeekly();else if(activePage==="monthly")renderMonthly();else renderProfile();
+}
+function showPage(page){activePage=page;for(const name of pages){$("page-"+name).hidden=name!==page;$("tab-"+name).setAttribute("aria-selected",String(name===page));}renderAnalytics();}
+function showView(analytics){
+ $("checkin-view").hidden=analytics;$("analytics").hidden=!analytics;
+ $("nav-checkin").setAttribute("aria-selected",String(!analytics));$("nav-analytics").setAttribute("aria-selected",String(analytics));
+ if(analytics){$("daily-date").max=today();if(!$("daily-date").value)$("daily-date").value=today();showPage(activePage);}else window.scrollTo({top:0,behavior:"smooth"});
+}
+function setView(analytics){if(analytics){location.hash="analytics";}else{history.replaceState(null,"",location.pathname+location.search);showView(false);}}
+$("nav-checkin").onclick=()=>setView(false);$("nav-analytics").onclick=()=>setView(true);$("return-checkin").onclick=()=>setView(false);
+for(const name of pages)$("tab-"+name).onclick=()=>showPage(name);
+$("daily-date").onchange=renderDaily;$("daily-series").onchange=renderDaily;$("entry-picker").onchange=refreshEntryDetail;
+$("profile-period").onchange=renderProfile;$("moving-average").onchange=renderMonthly;
+window.addEventListener("hashchange",()=>showView(location.hash==="#analytics"));
+renderEditor();showView(location.hash==="#analytics");render();
+if(typeof module!=="undefined")module.exports={estimate,affect};
+})();
 </script></html>
