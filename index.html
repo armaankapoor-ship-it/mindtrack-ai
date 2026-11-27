@@ -228,7 +228,7 @@ $('analyze').onclick=()=>{
  const lines=['AI-estimated primary outlook: '+p.label,feedback[p.label]];
  if(distinct.some(label=>label!==p.label)){
   lines.push('Other possible emotions: '+distinct.filter(label=>label!==p.label).join(', ')+'.');
-  if(earlier.length&&p.timeline.some(item=>item.index!==p.timeline[0].index))lines.push('Emotional pattern: '+[...new Set(p.timeline.filter(item=>item.clause!==entry||item.detected.length===1).map(item=>item.label))].join(' / ')+'.');
+  if(earlier.length&&p.timeline.some(item=>item.index!==p.timeline[0].index))lines.push('Emotional pattern: '+[...new Set(p.timeline.filter(item=>(item.clause!==entry||item.detected.length===1)&&(item.label===p.label||distinct.includes(item.label))).map(item=>item.label))].join(' / ')+'.');
  }
  if(p.timeline.length>1){lines.push('Context and evidence:');for(const item of p.moods.filter(m=>m.label===p.label||distinct.includes(m.label))){const evidence=item.evidence.join(', ');if(evidence)lines.push('- '+item.label+': '+evidence+'.');}
   const raw=normalizeText(entry);
